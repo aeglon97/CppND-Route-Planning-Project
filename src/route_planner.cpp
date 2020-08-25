@@ -34,13 +34,13 @@ float RoutePlanner::CalculateHValue(RouteModel::Node const *node) {
 
 void RoutePlanner::AddNeighbors(RouteModel::Node *current_node) {
     current_node->FindNeighbors();
-    for (RouteModel::Node* n : current_node->neighbors) {
-        n->parent = current_node;
-        n->h_value = this->CalculateHValue(n);
-        n->g_value = current_node->g_value + current_node->distance(*n);
+    for (RouteModel::Node* neighbor : current_node->neighbors) {
+        neighbor->parent = current_node;
+        neighbor->h_value = this->CalculateHValue(neighbor);
+        neighbor->g_value = current_node->g_value + current_node->distance(*neighbor);
 
-        this->open_list.emplace_back(n);
-        n->visited = true;
+        this->open_list.emplace_back(neighbor);
+        neighbor->visited = true;
     }
 }
 
@@ -57,8 +57,11 @@ struct Compare_Nodes {
     inline bool operator() (const RouteModel::Node* node1, const RouteModel::Node* node2) {
         float node1_sum = node1->g_value + node1->h_value;
         float node2_sum = node2->g_value + node2->h_value;
+
+        return node1_sum < node2_sum;
     }
 };
+
 RouteModel::Node *RoutePlanner::NextNode() {
     std::sort(open_list.begin(), open_list.end(), Compare_Nodes());
     RouteModel::Node* node_closest = open_list.front();
@@ -112,6 +115,7 @@ void RoutePlanner::AStarSearch() {
     RouteModel::Node *current_node = start_node;
 
     while (current_node != end_node){
+        current_node->visited = true;
         AddNeighbors(current_node);
         RouteModel::Node* closest_node = NextNode();
         current_node = closest_node;
